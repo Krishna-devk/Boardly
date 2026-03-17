@@ -1,0 +1,13 @@
+export const SOCKET_EVENTS = {
+  CONNECTION: 'connection',
+  DISCONNECT: 'disconnect',
+  JOIN_BOARD: 'join-board',
+  LEAVE_BOARD: 'leave-board',
+  DRAW: 'draw',
+  CURSOR_MOVE: 'cursor-move',
+  UNDO: 'undo',
+  REDO: 'redo',
+  BOARD_UPDATED: 'board-updated',
+  LOCK_BOARD: 'lock-board',
+  BOARD_RENAMED: 'board-renamed',
+};
