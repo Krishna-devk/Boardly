@@ -8,6 +8,7 @@ import api from '../services/api.ts';
 import { useAuthStore } from '../store/authStore.ts';
 import { getSocket } from '../services/socket.ts';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function Board() {
   const { id } = useParams<{ id: string }>();
@@ -91,15 +92,21 @@ export default function Board() {
 
   return (
     <div className="w-full h-screen relative bg-gray-50 dark:bg-gray-950 overflow-hidden transition-colors duration-200">
-      <button
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => navigate('/')}
-        className="absolute top-4 left-4 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-lg rounded-2xl text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 transition-colors border border-gray-200 dark:border-gray-700"
+        className="absolute top-5 sm:top-6 left-5 sm:left-6 z-50 flex items-center gap-2.5 px-3 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/60 dark:border-gray-700/50 rounded-[28px] text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group ring-1 ring-black/5 dark:ring-white/10"
       >
-        <ArrowLeft size={20} />
-      </button>
-      
-      <Toolbar 
-        boardName={boardName} 
+        <ArrowLeft size={16} className="transform transition-transform group-hover:-translate-x-0.5" />
+
+      </motion.button>
+
+      <Toolbar
+        boardName={boardName}
         boardId={id}
         onShare={() => setIsShareModalOpen(true)} 
         onDownload={() => whiteboardRef.current?.downloadImage()}

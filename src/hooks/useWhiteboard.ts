@@ -76,8 +76,12 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
     api.get(`/boards/${boardId}`).then(async (res) => {
       if (res.data.elements && Object.keys(res.data.elements).length > 0) {
         isRemoteUpdate.current = true;
-        await canvas.loadFromJSON(res.data.elements);
-        canvas.renderAll();
+        try {
+          await canvas.loadFromJSON(res.data.elements);
+          canvas.renderAll();
+        } catch (e) {
+          console.error("Failed to parse historical board data:", e);
+        }
         history.current = [canvas.toJSON()];
         isRemoteUpdate.current = false;
       } else {
@@ -97,20 +101,24 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
     const handleRemoteUpdate = async (elements: any) => {
       if (fabricCanvas.current) {
         isRemoteUpdate.current = true;
-        await fabricCanvas.current.loadFromJSON(elements);
-        
-        fabricCanvas.current.forEachObject((obj) => {
-          const isActiveToolSelect = toolRef.current === 'select';
-          obj.selectable = !disabledRef.current && isActiveToolSelect;
-          obj.evented = !disabledRef.current && isActiveToolSelect;
-        });
-        if (disabledRef.current || toolRef.current !== 'select') {
-          fabricCanvas.current.discardActiveObject();
-        }
+        try {
+          await fabricCanvas.current.loadFromJSON(elements);
+          
+          fabricCanvas.current.forEachObject((obj) => {
+            const isActiveToolSelect = toolRef.current === 'select';
+            obj.selectable = !disabledRef.current && isActiveToolSelect;
+            obj.evented = !disabledRef.current && isActiveToolSelect;
+          });
+          if (disabledRef.current || toolRef.current !== 'select') {
+            fabricCanvas.current.discardActiveObject();
+          }
 
-        fabricCanvas.current.renderAll();
-        history.current.push(elements);
-        if (history.current.length > 50) history.current.shift();
+          fabricCanvas.current.renderAll();
+          history.current.push(elements);
+          if (history.current.length > 50) history.current.shift();
+        } catch (e) {
+          console.error("Received malformed canvas update from socket:", e);
+        }
         isRemoteUpdate.current = false;
       }
     };
@@ -225,6 +233,9 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
     } else if (tool === 'select') {
       canvas.defaultCursor = 'default';
       canvas.hoverCursor = 'move';
+    } else if (tool === 'pan') {
+      canvas.defaultCursor = 'grab';
+      canvas.hoverCursor = 'grab';
     } else {
       canvas.defaultCursor = 'crosshair';
       canvas.hoverCursor = 'crosshair';
@@ -238,6 +249,11 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
 
     let shapeStartX = 0;
     let shapeStartY = 0;
+    
+    // Panning state
+    let isDragging = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
 
     const eraseObject = (e: any) => {
       const pointer = canvas.getScenePoint(e);
@@ -267,6 +283,17 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
     };
 
     const handleMouseDown = (o: any) => {
+      // Handle panning
+      if (tool === 'pan' || (o.e && o.e.altKey)) {
+        isDragging = true;
+        canvas.selection = false;
+        lastPosX = o.e.clientX;
+        lastPosY = o.e.clientY;
+        canvas.defaultCursor = 'grabbing';
+        canvas.hoverCursor = 'grabbing';
+        return;
+      }
+
       if (tool === 'select' || tool === 'draw') return;
       
       isDrawing.current = true;
@@ -358,13 +385,33 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
     };
 
     const handleMouseMove = (o: any) => {
-      if (!isDrawing.current) return;
-      
-      if (tool === 'eraser') {
-        eraseObject(o.e);
+      // Handle panning
+      if (isDragging) {
+        const e = o.e;
+        const vpt = canvas.viewportTransform;
+        if (vpt) {
+          vpt[4] += e.clientX - lastPosX;
+          vpt[5] += e.clientY - lastPosY;
+          canvas.requestRenderAll();
+        }
+        lastPosX = e.clientX;
+        lastPosY = e.clientY;
         return;
       }
 
+      // Force render frame for native Fabric brush tools to prevent invisible path lagging
+      if (tool === 'draw') {
+        canvas.requestRenderAll();
+        return;
+      }
+      if (tool === 'eraser') {
+        eraseObject(o.e);
+        canvas.requestRenderAll();
+        return;
+      }
+
+      if (!isDrawing.current) return;
+      
       const pointer = canvas.getScenePoint(o.e);
       const activeObj = drawingObject.current;
       if (!activeObj) return;
@@ -376,7 +423,7 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
           width: Math.abs(pointer.x - shapeStartX),
           height: Math.abs(pointer.y - shapeStartY),
         });
-        canvas.renderAll();
+        canvas.requestRenderAll();
       } else if (tool === 'circle') {
         const radius = Math.max(Math.abs(pointer.x - shapeStartX), Math.abs(pointer.y - shapeStartY)) / 2;
         activeObj.set({
@@ -384,39 +431,66 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
           top: shapeStartY > pointer.y ? shapeStartY - radius * 2 : shapeStartY,
           radius: radius,
         });
-        canvas.renderAll();
+        canvas.requestRenderAll();
       } else if (tool === 'line') {
         activeObj.set({
           x2: pointer.x,
           y2: pointer.y,
         });
-        canvas.renderAll();
+        canvas.requestRenderAll();
       } else if (tool === 'arrow') {
         const { line, head, startX, startY } = activeObj;
         line.set({ x2: pointer.x, y2: pointer.y });
         
         const angle = Math.atan2(pointer.y - startY, pointer.x - startX) * (180 / Math.PI);
         head.set({ left: pointer.x, top: pointer.y, angle: angle + 90 });
-        canvas.renderAll();
+        canvas.requestRenderAll();
       }
       
-      emitDraw(false); // Live streaming of shape transformation to guests
+      // Disabled live shape streaming while dragging to prevent upper-canvas toJSON freezing
+      // emitDraw(false);
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        canvas.defaultCursor = tool === 'pan' ? 'grab' : 'default';
+        canvas.hoverCursor = tool === 'pan' ? 'grab' : 'default';
+        canvas.selection = tool === 'select';
+        return;
+      }
+
       if (isDrawing.current) {
         isDrawing.current = false;
         
         if (drawingObject.current) {
           isRemoteUpdate.current = true; // Silence canvas events
           if (drawingObject.current.type === 'arrow') {
-             const { line, head } = drawingObject.current;
-             const group = new fabric.Group([line, head], { 
-               selectable: tool === 'select', 
-               evented: tool === 'select' 
+             const { line, head, startX, startY } = drawingObject.current;
+             const x2 = line.x2;
+             const y2 = line.y2;
+             const bSize = line.strokeWidth;
+             const cColor = line.stroke;
+             const dy = y2 - startY;
+             const dx = x2 - startX;
+             const angle = Math.atan2(dy, dx);
+             const headlen = Math.max(15, bSize * 3);
+             
+             // Build flawless path geometry to completely avoid JSON nested group parsing crashes
+             const pathData = `M ${startX} ${startY} L ${x2} ${y2} M ${x2 - headlen * Math.cos(angle - Math.PI / 6)} ${y2 - headlen * Math.sin(angle - Math.PI / 6)} L ${x2} ${y2} L ${x2 - headlen * Math.cos(angle + Math.PI / 6)} ${y2 - headlen * Math.sin(angle + Math.PI / 6)}`;
+             
+             const arrowPath = new fabric.Path(pathData, {
+               stroke: cColor,
+               strokeWidth: bSize,
+               fill: 'transparent',
+               strokeLineCap: 'round',
+               strokeLineJoin: 'round',
+               selectable: tool === 'select',
+               evented: tool === 'select'
              });
+             
              canvas.remove(line, head);
-             canvas.add(group);
+             canvas.add(arrowPath);
           } else {
              drawingObject.current.set({
                selectable: tool === 'select',
@@ -435,14 +509,28 @@ export const useWhiteboard = (boardId: string, canvasRef: React.RefObject<HTMLCa
       }
     };
 
+    const handleMouseWheel = (opt: any) => {
+      const delta = opt.e.deltaY;
+      let zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 10) zoom = 10;
+      if (zoom < 0.1) zoom = 0.1;
+      
+      canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    };
+
     canvas.on('mouse:down', handleMouseDown);
     canvas.on('mouse:move', handleMouseMove);
     canvas.on('mouse:up', handleMouseUp);
+    canvas.on('mouse:wheel', handleMouseWheel);
 
     return () => {
       canvas.off('mouse:down', handleMouseDown);
       canvas.off('mouse:move', handleMouseMove);
       canvas.off('mouse:up', handleMouseUp);
+      canvas.off('mouse:wheel', handleMouseWheel);
     };
   }, [tool, color, brushSize, setTool, isDrawingDisabled]);
 
