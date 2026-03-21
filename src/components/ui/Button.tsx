@@ -13,6 +13,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   children?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   title?: string;
+  type?: 'submit' | 'reset' | 'button';
 }
 
 export function Button({ className, variant = 'primary', size = 'md', ...props }: ButtonProps) {

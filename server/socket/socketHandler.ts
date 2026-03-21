@@ -46,6 +46,19 @@ export const setupSocket = (io: Server) => {
       socket.to(data.boardId).emit(SOCKET_EVENTS.BOARD_RENAMED, { name: data.name });
       logger.info(`Board ${data.boardId} renamed to ${data.name}`);
     });
+    
+    socket.on(SOCKET_EVENTS.REACTION, (data: { boardId: string; userId: string; emoji: string; x: number; y: number }) => {
+      socket.to(data.boardId).emit(SOCKET_EVENTS.REACTION, { userId: data.userId, emoji: data.emoji, x: data.x, y: data.y });
+    });
+    
+    socket.on(SOCKET_EVENTS.LASER_DRAG, (data: { boardId: string; userId: string; x: number; y: number }) => {
+      socket.to(data.boardId).emit(SOCKET_EVENTS.LASER_DRAG, { userId: data.userId, x: data.x, y: data.y });
+    });
+
+    socket.on(SOCKET_EVENTS.SPOTLIGHT, (data: { boardId: string; vpt: number[]; zoom: number }) => {
+      // Broadcast presenter's viewport transform to all other users
+      socket.to(data.boardId).emit(SOCKET_EVENTS.SPOTLIGHT, { vpt: data.vpt, zoom: data.zoom });
+    });
 
     socket.on(SOCKET_EVENTS.DISCONNECT, () => {
       logger.info(`User disconnected: ${socket.id}`);

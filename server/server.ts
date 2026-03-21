@@ -41,8 +41,11 @@ const startServer = async () => {
   app.use(notFound);
   app.use(errorHandler);
 
-  server.listen(env.port, () => {
-    logger.info(`Server running in ${env.nodeEnv} mode on port ${env.port}`);
+  server.listen(env.port, '0.0.0.0', () => {
+    logger.info(`Server running in ${env.nodeEnv} mode`);
+    logger.info(`- Local:   http://localhost:${env.port}`);
+    // The following is an example, it doesn't dynamically fetch IP but we tell the user.
+    logger.info(`- Network: http://10.255.163.28:${env.port}`);
   });
 };
 

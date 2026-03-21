@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Share2, Download, Cloud, CloudOff, Sun, Moon, Lock, Unlock, Edit2, Check, X, ChevronRight, Settings2 } from 'lucide-react';
+import { Share2, Download, Cloud, CloudOff, Sun, Moon, Lock, Unlock, Edit2, Check, X, ChevronRight, Settings2, Radio, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { Button } from './Button.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { getSocket } from '../../services/socket.ts';
@@ -14,15 +14,19 @@ interface ToolbarProps {
   isLocked: boolean;
   onToggleLock: () => void;
   onRename: (newName: string) => void;
+  isSpotlighting?: boolean;
+  onToggleSpotlight?: () => void;
+  onAIAnalyze?: () => void;
 }
 
-export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLocked, onToggleLock, onRename }: ToolbarProps) {
+export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLocked, onToggleLock, onRename, isSpotlighting = false, onToggleSpotlight, onAIAnalyze }: ToolbarProps) {
   const [isSaved, setIsSaved] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState(boardName);
   const [isExpanded, setIsExpanded] = useState(true);
   const { isDark, toggleDarkMode } = useDarkModeStore();
   const inputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     setEditNameValue(boardName);
@@ -113,7 +117,7 @@ export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLo
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="pointer-events-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] rounded-3xl flex flex-col sm:flex-row items-end sm:items-center border border-white/60 dark:border-gray-700/50 ring-1 ring-black/5 dark:ring-white/10 px-4 py-3 sm:px-5 sm:py-3 gap-3 overflow-hidden origin-bottom-right"
+            className="pointer-events-auto glass shadow-premium rounded-[32px] flex flex-col sm:flex-row items-end sm:items-center border border-[var(--border)] ring-1 ring-black/5 dark:ring-white/10 px-5 py-3 sm:px-6 sm:py-3.5 gap-4 overflow-visible origin-bottom-right"
           >
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-end sm:items-center gap-3 mr-0 sm:mr-2 whitespace-nowrap">
               {/* Name Editing Area */}
@@ -136,7 +140,7 @@ export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLo
                 </div>
               ) : (
                 <div className="group flex items-center gap-2">
-                  <h1 className="font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[120px] sm:max-w-[200px]">
+                  <h1 className="font-bold text-[var(--foreground)] truncate max-w-[120px] sm:max-w-[200px] tracking-tight">
                     {boardName}
                   </h1>
                   {isOwner && (
@@ -164,7 +168,7 @@ export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLo
               )}
             </motion.div>
             
-            <motion.div variants={itemVariants} className="w-full h-px sm:w-px sm:h-8 bg-gray-200 dark:bg-gray-700/50" />
+            <motion.div variants={itemVariants} className="w-full h-px sm:w-px sm:h-8 bg-[var(--border)]" />
             
             <motion.div variants={itemVariants} className="flex flex-row sm:flex-row items-center gap-1 sm:gap-1.5 whitespace-nowrap">
               <Button variant="ghost" size="sm" onClick={onShare} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-xl px-2 sm:px-3 font-medium">
@@ -174,6 +178,31 @@ export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLo
               <Button variant="ghost" size="sm" onClick={onDownload} className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl px-2 sm:px-3" title="Download Image">
                 <Download size={18} />
               </Button>
+              {onAIAnalyze && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onAIAnalyze}
+                  className="rounded-xl px-2 sm:px-3 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                  title="AI Board Analysis"
+                >
+                  <Sparkles size={18} />
+                </Button>
+              )}
+              {isOwner && onToggleSpotlight && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleSpotlight}
+                  className={`rounded-xl px-2 sm:px-3 relative ${isSpotlighting ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                  title={isSpotlighting ? 'Stop Follow Me mode' : 'Follow Me — sync all viewers to your view'}
+                >
+                  <Radio size={18} className={isSpotlighting ? 'animate-pulse' : ''} />
+                  {isSpotlighting && (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                  )}
+                </Button>
+              )}
               {isOwner && (
                 <Button
                   variant="ghost"
@@ -198,7 +227,7 @@ export function Toolbar({ boardName, boardId, onShare, onDownload, isOwner, isLo
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="pointer-events-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 dark:border-gray-700 rounded-full p-3 sm:p-3.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 flex-shrink-0"
+        className="pointer-events-auto glass shadow-premium border border-[var(--border)] rounded-full p-4 text-[var(--foreground)] hover:text-indigo-600 transition-all flex-shrink-0 group"
         title={isExpanded ? "Collapse Toolbar" : "Expand Toolbar"}
       >
         <AnimatePresence mode="wait">

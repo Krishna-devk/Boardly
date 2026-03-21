@@ -20,7 +20,7 @@ export default function Home() {
   }, [setBoards]);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+    <div className="flex h-screen bg-[var(--background)] transition-colors duration-300">
       <Sidebar />
       <div className="flex-1 p-10 flex flex-col items-center justify-center text-center">
         <div className="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6 shadow-sm">

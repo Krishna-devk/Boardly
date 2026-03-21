@@ -3,6 +3,9 @@ import { User } from '../models/User.ts';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.ts';
 import { AuthRequest } from '../middleware/authMiddleware.ts';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(env.googleClientId);
 
 const generateToken = (id: string) => {
   return jwt.sign({ id }, env.jwtSecret, {
@@ -75,6 +78,51 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     } else {
       res.status(404).json({ message: 'User not found' });
     }
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const googleLogin = async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body;
+    
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: env.googleClientId,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+       res.status(400).json({ message: 'Invalid google token' });
+       return;
+    }
+    
+    const { email, name, sub: googleId } = payload;
+    
+    let user: any = await User.findOne({ email });
+    
+    if (user) {
+      // Update googleId if not present (linking accounts)
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
+      // Create new user (no password)
+      user = await User.create({
+        name: name || 'Google User',
+        email,
+        googleId,
+      });
+    }
+    
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id.toString()),
+    });
+    
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Square, Circle, Type, Eraser, MousePointer2, Minus, ArrowRight, Undo2, Redo2, ChevronLeft, Palette, Hand } from 'lucide-react';
+import { Pencil, Square, Circle, Type, Eraser, MousePointer2, Minus, ArrowRight, Undo2, Redo2, ChevronLeft, Palette, Hand, StickyNote, Spline, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface DrawingToolsProps {
@@ -15,15 +15,18 @@ interface DrawingToolsProps {
 
 export default function DrawingTools({ tool, setTool, color, setColor, brushSize, setBrushSize, undo, redo }: DrawingToolsProps) {
   const tools = [
-    { id: 'pan', icon: Hand },
-    { id: 'select', icon: MousePointer2 },
-    { id: 'draw', icon: Pencil },
-    { id: 'line', icon: Minus },
-    { id: 'arrow', icon: ArrowRight },
-    { id: 'rect', icon: Square },
-    { id: 'circle', icon: Circle },
-    { id: 'text', icon: Type },
-    { id: 'eraser', icon: Eraser },
+    { id: 'pan', icon: Hand, shortcut: 'H / Space' },
+    { id: 'select', icon: MousePointer2, shortcut: 'V' },
+    { id: 'draw', icon: Pencil, shortcut: 'P' },
+    { id: 'line', icon: Minus, shortcut: 'L' },
+    { id: 'arrow', icon: ArrowRight, shortcut: 'A' },
+    { id: 'rect', icon: Square, shortcut: 'R' },
+    { id: 'circle', icon: Circle, shortcut: 'C' },
+    { id: 'text', icon: Type, shortcut: 'T' },
+    { id: 'sticky', icon: StickyNote, shortcut: 'S' },
+    { id: 'connector', icon: Spline, shortcut: 'N' },
+    { id: 'image', icon: ImagePlus, shortcut: 'I' },
+    { id: 'eraser', icon: Eraser, shortcut: 'E' },
   ];
 
   const presetColors = ['#000000', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#ffffff'];
@@ -81,7 +84,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
               exit="exit"
               className="flex flex-col gap-2 h-full min-h-0 pointer-events-none"
             >
-              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] rounded-[28px] py-3 px-2 flex flex-col items-center justify-start gap-1.5 border border-white/60 dark:border-gray-700/50 ring-1 ring-black/5 dark:ring-white/10 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1 min-h-0 pointer-events-auto">
+              <div className="glass shadow-premium rounded-[32px] py-4 px-2.5 flex flex-col items-center justify-start gap-2 border border-[var(--border)] ring-1 ring-black/5 dark:ring-white/10 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1 min-h-0 pointer-events-auto">
                 {tools.map((t) => (
                   <motion.button
                     key={t.id}
@@ -89,7 +92,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
                     whileHover={{ scale: 1.15, x: 2 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setTool(t.id)}
-                    title={t.id.charAt(0).toUpperCase() + t.id.slice(1)}
+                    title={`${t.id.charAt(0).toUpperCase() + t.id.slice(1)} (${t.shortcut})`}
                     className={`p-2.5 rounded-[14px] transition-colors duration-200 flex-shrink-0 w-11 h-11 flex items-center justify-center ${
                       tool === t.id 
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40 dark:bg-indigo-500' 
@@ -107,7 +110,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
                   whileHover={{ scale: 1.1, x: 2 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={undo}
-                  title="Undo"
+                  title="Undo (Ctrl+Z)"
                   className="p-2.5 rounded-[14px] w-11 h-11 flex items-center justify-center hover:bg-gray-100 text-gray-600 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                 >
                   <Undo2 size={20} />
@@ -117,7 +120,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
                   whileHover={{ scale: 1.1, x: 2 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={redo}
-                  title="Redo"
+                  title="Redo (Ctrl+Y)"
                   className="p-2.5 rounded-[14px] w-11 h-11 flex items-center justify-center hover:bg-gray-100 text-gray-600 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
                 >
                   <Redo2 size={20} />
@@ -126,7 +129,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
 
               <motion.div 
                 variants={itemVariants} 
-                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] rounded-[24px] p-2 flex flex-col items-center gap-3 border border-white/60 dark:border-gray-700/50 ring-1 ring-black/5 dark:ring-white/10 overflow-visible flex-shrink-0 pointer-events-auto relative"
+                className="glass shadow-premium rounded-[24px] p-2.5 flex flex-col items-center gap-3 border border-[var(--border)] ring-1 ring-black/5 dark:ring-white/10 overflow-visible flex-shrink-0 pointer-events-auto relative"
               >
                 <div className="relative z-50">
                   <motion.button
@@ -151,24 +154,36 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
                           return (
                             <motion.button
                               key={c}
-                              initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
+                              initial={{ opacity: 0, x, y, scale: 0 }}
                               animate={{ opacity: 1, x, y, scale: 1 }}
-                              exit={{ opacity: 0, x: 0, y: 0, scale: 0 }}
-                              transition={{ type: 'spring', stiffness: 450, damping: 25, delay: index * 0.01 }}
+                              exit={{ opacity: 0, scale: 0.4 }}
+                              transition={{
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 28,
+                                delay: index * 0.018,
+                                exit: { duration: 0.12, ease: 'easeIn', delay: 0 },
+                              }}
                               onClick={() => { setColor(c); setShowColors(false); }}
-                              className={`absolute -ml-4 -mt-4 w-8 h-8 rounded-full border shadow-[0_8px_16px_rgba(0,0,0,0.25)] hover:scale-125 pointer-events-auto transition-transform ${color === c ? 'ring-4 ring-indigo-500/60 ring-offset-2 border-transparent dark:ring-offset-gray-900' : 'border-white/90 dark:border-gray-500'}`}
+                              className={`absolute -ml-4 -mt-4 w-8 h-8 rounded-full border shadow-[0_8px_16px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] pointer-events-auto transition-all ${color === c ? 'ring-4 ring-indigo-500/60 ring-offset-2 border-transparent dark:ring-offset-gray-900 scale-110' : 'border-white/90 dark:border-gray-500 hover:scale-105'}`}
                               style={{ backgroundColor: c }}
                             />
                           );
                         })}
                         
                         <motion.div
-                           initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
+                           initial={{ opacity: 0, x: 105, y: 0, scale: 0 }}
                            animate={{ opacity: 1, x: 105, y: 0, scale: 1 }}
-                           exit={{ opacity: 0, x: 0, y: 0, scale: 0 }}
-                           transition={{ type: 'spring', stiffness: 450, damping: 25, delay: presetColors.length * 0.01 }}
+                           exit={{ opacity: 0, scale: 0.4 }}
+                           transition={{
+                             type: 'spring',
+                             stiffness: 500,
+                             damping: 28,
+                             delay: presetColors.length * 0.018,
+                             exit: { duration: 0.12, ease: 'easeIn', delay: 0 },
+                           }}
                            title="Custom Color Picker"
-                           className="absolute -ml-5 -mt-5 w-10 h-10 pointer-events-auto rounded-[16px] bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-[0_10px_25px_rgba(0,0,0,0.2)] flex items-center justify-center border border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform cursor-pointer"
+                           className="absolute -ml-5 -mt-5 w-10 h-10 pointer-events-auto rounded-[16px] bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-[0_10px_25px_rgba(0,0,0,0.2)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.4)] flex items-center justify-center border border-gray-200 dark:border-gray-600 transition-all cursor-pointer hover:bg-white dark:hover:bg-gray-800"
                         >
                           <input 
                             type="color" 
@@ -203,7 +218,7 @@ export default function DrawingTools({ tool, setTool, color, setColor, brushSize
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="pointer-events-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/50 dark:border-gray-700 rounded-full p-3.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 z-20 flex-shrink-0"
+        className="pointer-events-auto glass shadow-premium border border-[var(--border)] rounded-full p-4 text-[var(--foreground)] hover:text-indigo-600 transition-all z-20 flex-shrink-0 group"
         title={isExpanded ? "Collapse Drawing Tools" : "Expand Drawing Tools"}
       >
         <AnimatePresence mode="wait">

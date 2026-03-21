@@ -15,7 +15,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
-
+.gitignore
 # Dependency directories
 node_modules/
 jspm_packages/

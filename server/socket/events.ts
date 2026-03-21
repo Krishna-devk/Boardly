@@ -10,4 +10,7 @@ export const SOCKET_EVENTS = {
   BOARD_UPDATED: 'board-updated',
   LOCK_BOARD: 'lock-board',
   BOARD_RENAMED: 'board-renamed',
+  REACTION: 'reaction',
+  LASER_DRAG: 'laser-drag',
+  SPOTLIGHT: 'spotlight',
 };

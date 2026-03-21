@@ -64,7 +64,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-64 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-sm transition-colors duration-200">
+    <div className="w-68 h-screen glass border-r border-[var(--border)] flex flex-col shadow-premium transition-all duration-300">
       <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
@@ -126,14 +126,14 @@ export function Sidebar() {
                     <span className="font-medium truncate">{board.name}</span>
                   </Link>
                   <div className="hidden group-hover:flex items-center gap-1 pr-2 absolute right-0 bg-gray-100 dark:bg-gray-800 py-2 pl-3 rounded-r-xl border-l border-transparent">
-                    <button 
+                    <button
                       onClick={(e) => startEditing(board._id, board.name, e)}
                       className="p-1 rounded text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                       title="Rename"
                     >
                       <Edit2 size={16} />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => handleDeleteBoard(board._id, e)}
                       className="p-1 rounded text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
                       title="Delete"
